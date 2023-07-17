@@ -3,20 +3,29 @@
 #define MAX_SIZE 2000;
 #define PRIME 163;
 
+/*
+- Implement Resizing
+- https://github.com/jamesroutley/write-a-hash-table/tree/master/06-resizing
+*/
+
+// struct to hold the item itself
 typedef struct {
     char* key;
     char* value;
 } HashItem;
 
+// temp item for deleted values
 static HashItem HT_DELETED_ITEM = {NULL, NULL};
 
 class Hashtable {
     private:
+        // class variables
         int size;
         int count;
         HashItem** items;
-        int prime, mod, prime_two;
+        int prime, mod;
 
+        // hash function
         int hash(const char* str, const int prime, const int mod) {
             assert(!is_valid_prime(prime) && "Must be a prime number");
 
@@ -29,6 +38,7 @@ class Hashtable {
             return (int)hash;
         }
 
+        // create a new hashtable item
         HashItem* hash_new_item(const char* key, const char* value) {
             HashItem* item = new HashItem;
             item->key = strdup(key);
@@ -37,6 +47,7 @@ class Hashtable {
             return item;
         }
 
+        // free the memory of an item
         void delete_item(HashItem* item) {
             if (item != nullptr) {
                 delete item;

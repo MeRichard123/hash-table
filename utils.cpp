@@ -1,3 +1,5 @@
+#include "headers/utils.h"
+
 bool is_valid_prime(int prime) {
     // make sure it's above the alphabet
     if (prime < 128) {
