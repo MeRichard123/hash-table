@@ -1,13 +1,17 @@
 #include "headers/hash_table.h"
 #include "utils.cpp"
-
-/*
-- Implement Resizing
-- https://github.com/jamesroutley/write-a-hash-table/tree/master/06-resizing
-*/
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <string>
 
 // temp item for deleted values
 static HashItem HT_DELETED_ITEM = {NULL, NULL};
+
+float calculate_load(int items, int buckets)
+{
+    return (float)items / (float)buckets;
+}
 
 // hash function (try to different one in the future)
 int Hashtable::hash(const char *str, const int prime, const int mod)
@@ -22,6 +26,14 @@ int Hashtable::hash(const char *str, const int prime, const int mod)
         hash = hash % mod;
     }
     return (int)hash;
+}
+
+int Hashtable::get_hash(const char *s, const int attempt)
+{
+    // double hash to reduce collisions (open addressing)
+    const int hash_a = hash(s, prime, mod);
+    const int hash_b = hash(s, next_prime(prime), mod);
+    return (hash_a + (attempt * (hash_b + 1))) % mod;
 }
 
 // create a new hashtable item
@@ -71,23 +83,36 @@ Hashtable::~Hashtable()
     }
 }
 
-int Hashtable::get_hash(const char *s, const int attempt)
+void Hashtable::print_table()
 {
-    // double hash to reduce collisions (open addressing)
-    const int hash_a = hash(s, prime, mod);
-    const int hash_b = hash(s, next_prime(prime), mod);
-    return (hash_a + (attempt * (hash_b + 1))) % mod;
+    printf("%d <- count\n", count);
+#if 1
+    for (int i = 0; i < size; ++i)
+    {
+        if (items[i] != nullptr)
+            printf("%s, ", items[i]->key);
+    }
+#endif
 }
 
 // Insert into hash table
 void Hashtable::insert(const char *key, const char *value)
 {
+    float load = calculate_load(count, size);
+
+    if (load >= 0.7)
+    {
+        // assert(0 && "Todo: Broken");
+        resize();
+    }
+
     HashItem *new_item = hash_new_item(key, value);
     int index = get_hash(new_item->key, 0);
 
     HashItem *cur_item = items[index];
     int i = 1;
     // dealing with collision (re-hashing)
+
     while (cur_item != NULL && cur_item != &HT_DELETED_ITEM)
     {
         index = get_hash(new_item->key, i);
@@ -107,7 +132,11 @@ void Hashtable::insert(const char *key, const char *value)
             }
         }
     }
+
     items[index] = new_item;
+    std::cout << "Inserted " << key << " into table "
+              << &items << " "
+              << std::endl;
     count++;
 }
 
@@ -155,4 +184,45 @@ void Hashtable::remove(const char *key)
         i++;
     }
     count--;
+}
+
+void Hashtable::resize()
+{
+    int counter = count;
+    std::cout << "Resizing..." << std::endl;
+    int old_size = size;
+    size = size * 2;
+    mod = size;
+    HashItem **resized_items = new HashItem *[size];
+    HashItem **temp_items = new HashItem *[old_size];
+    count = 0;
+
+    for (int i = 0; i < old_size; ++i)
+    {
+        if (items[i] != nullptr)
+        {
+            HashItem *I = hash_new_item(items[i]->key, items[i]->value);
+            temp_items[i] = I;
+        }
+    }
+
+    delete[] items;
+
+    items = new HashItem *[size];
+    items = resized_items;
+
+    for (int i = 0; i < old_size; ++i)
+    {
+        if (temp_items[i] != nullptr)
+        {
+            // I have a sneaky suspicion that something sus is going on
+            // here when we reinsert.
+            // also double resize no work
+            insert(temp_items[i]->key, temp_items[i]->value);
+        }
+    }
+    printf("\n");
+
+    delete[] temp_items;
+    delete[] resized_items;
 }

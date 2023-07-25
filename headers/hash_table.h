@@ -1,40 +1,46 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
-#define MAX_SIZE 2000;
+#define MAX_SIZE 256;
 #define PRIME 163;
 
 // struct to hold the item itself
-typedef struct {
+typedef struct
+{
     char *key;
     char *value;
 } HashItem;
 
-class Hashtable {
-    private:
-        int size;
-        int count;
-        int prime, mod;
-        HashItem **items;
+class Hashtable
+{
+private:
+    int size;
+    int count;
+    int prime, mod;
+    HashItem **items;
 
-        int hash(const char *str, const int prime, const int mod);
+    int hash(const char *str, const int prime, const int mod);
 
-        HashItem *hash_new_item(const char *key, const char *value);
+    int get_hash(const char *s, const int attempt);
 
-        void delete_item(HashItem *item);
+    HashItem *hash_new_item(const char *key, const char *value);
 
-    public:
-        Hashtable();
+    void delete_item(HashItem *item);
 
-        ~Hashtable();
+    void resize();
 
-        int get_hash(const char *s, const int attempt);
+public:
+    Hashtable();
 
-        void insert(const char *key, const char *value);
+    ~Hashtable();
 
-        char *search(const char *key);
+    void insert(const char *key, const char *value);
 
-        void remove(const char *key);
+    char *search(const char *key);
+
+    void remove(const char *key);
+
+    void print_table();
 };
 
 #endif // hash_table.h
